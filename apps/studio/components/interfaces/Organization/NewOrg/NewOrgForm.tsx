@@ -64,7 +64,7 @@ const ORG_SIZE_DEFAULT = '1'
 
 interface NewOrgFormProps {
   onPaymentMethodReset: () => void
-  setupIntent: SetupIntentResponse
+  setupIntent?: SetupIntentResponse
 }
 
 const formSchema = z.object({
