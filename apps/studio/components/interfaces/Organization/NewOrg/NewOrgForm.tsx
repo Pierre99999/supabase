@@ -14,10 +14,7 @@ import { LOCAL_STORAGE_KEYS } from 'common'
 import SpendCapModal from 'components/interfaces/Billing/SpendCapModal'
 import Panel from 'components/ui/Panel'
 import { useOrganizationCreateMutation } from 'data/organizations/organization-create-mutation'
-import {
-  invalidateOrganizationsQuery,
-  useOrganizationsQuery,
-} from 'data/organizations/organizations-query'
+import { useOrganizationsQuery } from 'data/organizations/organizations-query'
 import { useProjectsQuery } from 'data/projects/projects-query'
 import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
 import { PRICING_TIER_LABELS_ORG, STRIPE_PUBLIC_KEY } from 'lib/constants'
@@ -100,7 +97,6 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent }: NewOrgFormProps) => {
   const { data: organizations, isSuccess } = useOrganizationsQuery()
   const { data: projects } = useProjectsQuery()
 
-  const queryClient = useQueryClient()
   const { resolvedTheme } = useTheme()
 
   const [lastVisitedOrganization] = useLocalStorageQuery(
@@ -170,8 +166,6 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent }: NewOrgFormProps) => {
 
   const { mutate: createOrganization } = useOrganizationCreateMutation({
     onSuccess: async (org) => {
-      await invalidateOrganizationsQuery(queryClient)
-
       if ('pending_payment_intent_secret' in org && org.pending_payment_intent_secret) {
         setPaymentIntentSecret(org.pending_payment_intent_secret)
       } else {
