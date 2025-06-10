@@ -3,6 +3,8 @@ import { toast } from 'sonner'
 
 import { handleError, post } from 'data/fetchers'
 import type { ResponseError } from 'types'
+import { organizationKeys } from 'data/organizations/keys'
+import { permissionKeys } from 'data/permissions/keys'
 
 export type PendingSubscriptionChangeVariables = {
   payment_intent_id: string
@@ -52,6 +54,22 @@ export const useConfirmPendingSubscriptionChangeMutation = ({
     PendingSubscriptionChangeVariables
   >((vars) => confirmPendingSubscriptionChange(vars), {
     async onSuccess(data, variables, context) {
+      // [Joshen] We're manually updating the query client here as the org's subscription is
+      // created async, and the invalidation will happen too quick where the GET organizations
+      // endpoint will error out with a 500 since the subscription isn't created yet.
+      queryClient.setQueriesData(
+        {
+          queryKey: organizationKeys.list(),
+          exact: true,
+        },
+        (prev: any) => {
+          if (!prev) return prev
+          return [...prev, data]
+        }
+      )
+
+      await queryClient.invalidateQueries(permissionKeys.list())
+
       // todo replace plan in org
       await onSuccess?.(data, variables, context)
     },
