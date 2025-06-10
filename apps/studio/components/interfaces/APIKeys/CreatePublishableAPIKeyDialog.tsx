@@ -54,7 +54,7 @@ function CreatePublishableAPIKeyDialog() {
   const { mutate: createAPIKey, isLoading: isCreatingAPIKey } = useAPIKeyCreateMutation()
 
   const onSubmit: SubmitHandler<z.infer<typeof SCHEMA>> = async (values) => {
-    createAPIKey(
+    await createAPIKey(
       {
         projectRef,
         type: 'publishable',

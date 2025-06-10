@@ -24,10 +24,21 @@ import { useParams } from 'common'
 import { useAPIKeyCreateMutation } from 'data/api-keys/api-key-create-mutation'
 import { Plus } from 'lucide-react'
 
+const NAME_SCHEMA = z
+  .string()
+  .min(4, 'Name must be at least 4 characters')
+  .max(64, "Name can't be more than 64 characters long")
+  .regex(/^[a-z0-9_]+$/, 'Name can only contain lowercased letters, digits and underscore')
+  .refine((val: string) => !val.match(/^[0-9].+$/), 'Name must not start with a digit')
+  .refine(
+    (val: string) => val !== 'anon' && val !== 'service_role',
+    'Using "anon" or "service_role" for API key name is not possible'
+  )
+
 const FORM_ID = 'create-secret-api-key'
 const SCHEMA = z.object({
-  name: z.string(),
-  description: z.string().trim(),
+  name: NAME_SCHEMA,
+  description: z.string().max(256, "Description shouldn't be too long").trim(),
 })
 
 const CreateSecretAPIKeyDialog = () => {
@@ -49,7 +60,7 @@ const CreateSecretAPIKeyDialog = () => {
   const { mutate: createAPIKey, isLoading: isCreatingAPIKey } = useAPIKeyCreateMutation()
 
   const onSubmit: SubmitHandler<z.infer<typeof SCHEMA>> = async (values) => {
-    createAPIKey(
+    await createAPIKey(
       {
         projectRef,
         type: 'secret',
@@ -68,7 +79,7 @@ const CreateSecretAPIKeyDialog = () => {
     <Dialog open={visible} onOpenChange={onClose}>
       <DialogTrigger asChild>
         <Button type="default" className="mt-2" icon={<Plus />}>
-          Add new Secret key
+          Add new secret key
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -82,6 +93,7 @@ const CreateSecretAPIKeyDialog = () => {
 
             <p>
               Keep these keys private. Don't publish them online or commit them to source control.
+              They don't work when used in a browser.
             </p>
           </DialogDescription>
         </DialogHeader>
@@ -100,10 +112,10 @@ const CreateSecretAPIKeyDialog = () => {
                 render={({ field }) => (
                   <FormItemLayout
                     label="Name"
-                    description="A short name of lowercase alphanumeric characters and underscore, must start with letter or underscore."
+                    description="A short, unique name of lowercased letters, digits and underscore"
                   >
                     <FormControl_Shadcn_>
-                      <Input_Shadcn_ {...field} />
+                      <Input_Shadcn_ {...field} placeholder="Example: my_super_secret_key_123" />
                     </FormControl_Shadcn_>
                   </FormItemLayout>
                 )}
@@ -115,7 +127,7 @@ const CreateSecretAPIKeyDialog = () => {
                 render={({ field }) => (
                   <FormItemLayout
                     label="Description"
-                    description="Provide a description about what this key is used for."
+                    description="Write down some notes on how or where this key is used for"
                   >
                     <FormControl_Shadcn_>
                       <Input_Shadcn_ {...field} placeholder="(Optional)" />
